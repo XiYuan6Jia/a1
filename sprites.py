@@ -3,7 +3,7 @@ import random
 import math
 import maps
 
-test_border = 1  # 是否显示边框用于调试
+test_border = 0  # 是否显示边框用于调试
 test_hitbox = 0  # 是否启用碰撞检测用于调试
 
 class tank(pg.sprite.Sprite):#坦克
@@ -26,7 +26,7 @@ class tank(pg.sprite.Sprite):#坦克
         pg.draw.rect(self.original_image, border_color, (15, 0, self.width-30, self.height), 2)
         
         # 绘制炮管(从中心向前延伸)
-        barrel_length = 35
+        barrel_length = 34
         pg.draw.line(
             self.original_image, 
             border_color,
@@ -41,30 +41,56 @@ class tank(pg.sprite.Sprite):#坦克
         # 设置旋转后的图像和位置
         self.image = pg.transform.rotate(self.original_image, self.angle)
         self.rect = self.image.get_rect(center=(640, 360))
+        self.mask = pg.mask.from_surface(self.image)  # 用于像素级碰撞检测
+
+        self.alive = True  # 坦克存活状态
      
     def rotate(self, angle_change):
         """旋转坦克"""
+        self.remember_angle()  # 记住当前角度
         self.angle = (self.angle + angle_change) % 360
         self.image = pg.transform.rotate(self.original_image, self.angle)
         self.rect = self.image.get_rect(center=self.rect.center)
+        self.mask = pg.mask.from_surface(self.image)  # 更新碰撞掩码
+
         if test_border:
             self.show_image_border()  # 调试用，显示边框
 
     def move_forward(self, distance):
         """向前移动坦克"""
+        self.remember_position()  # 记住当前位置
         rad_angle = math.radians(self.angle)
         self.rect.x += distance * math.cos(rad_angle)
         self.rect.y -= distance * math.sin(rad_angle)
+        self.mask = pg.mask.from_surface(self.image)  # 更新碰撞掩码
         if test_border:
             self.show_image_border()  # 调试用，显示边框
 
     def move_backward(self, distance):
         """向后移动坦克"""
+        self.remember_position()  # 记住当前位置
         rad_angle = math.radians(self.angle)
         self.rect.x -= distance * math.cos(rad_angle)
         self.rect.y += distance * math.sin(rad_angle)
+        self.mask = pg.mask.from_surface(self.image)  # 更新碰撞掩码
         if test_border:
             self.show_image_border()  # 调试用，显示边框
+
+    def remember_position(self):
+        """记住当前位置（用于碰撞后回退）"""
+        self.last_position = self.rect.topleft
+
+    def remember_angle(self):
+        """记住当前角度（用于碰撞后回退）"""
+        self.last_angle = self.angle
+
+    def rewind_move(self):
+        """将坦克移回上一位置（简单碰撞处理）"""
+        self.rect.topleft = self.last_position
+        self.angle = self.last_angle
+        self.image = pg.transform.rotate(self.original_image, self.angle)
+        self.rect = self.image.get_rect(center=self.rect.center)
+        self.mask = pg.mask.from_surface(self.image)  # 更新碰撞掩码
             
     def show_image_border(self):
         """显示坦克边框（调试用）"""
@@ -79,115 +105,28 @@ class bullet(pg.sprite.Sprite):#子弹
         self.rect = self.image.get_rect(center=pos)
         self.angle = angle
         self.speed = 10
+        rad_angle = math.radians(self.angle)
+        self.x_speed = self.speed * math.cos(rad_angle)
+        self.y_speed = self.speed * math.sin(rad_angle)
+        self.mask = pg.mask.from_surface(self.image)  # 用于像素级碰撞检测
+        self.time_lived = 0  # 子弹存在的时间
+
 
     def update(self):
-        rad_angle = math.radians(self.angle)
-        self.rect.x += self.speed * math.cos(rad_angle)
-        self.rect.y -= self.speed * math.sin(rad_angle)
+        self.rect.x += self.x_speed
+        self.rect.y -= self.y_speed
+        self.time_lived += 1
+        if self.time_lived > 500:  # 子弹存在时间超过100帧则消失
+            self.kill()
+
+    def kill(self):
+        super().kill()
+        self.alive = False
 
 class wall(pg.sprite.Sprite):#墙壁
-    def __init__(self, pos, size):
+    def __init__(self, pos, size, type):
         super().__init__()
+        self.type = type
         self.image = pg.Surface(size)
         self.image.fill((0, 0, 0)) # 黑色墙壁
         self.rect = self.image.get_rect(topleft=pos)
-
-if __name__ == "__main__":
-    ##############################################################################
-    #帧率
-    clock = pg.time.Clock()
-    targeted_fps = 30
-
-    #坦克组
-    tank1 = tank()
-    tank_group = pg.sprite.Group()
-    #子弹组
-    bullet_group = pg.sprite.Group()
-    #墙壁组
-    wall_group = pg.sprite.Group()
-    for wall_info in maps.map1:
-        new_wall = wall(wall_info['pos'], wall_info['size'])
-        wall_group.add(new_wall)
-
-
-    #初始化pygame
-    pg.init()
-
-    window = pg.display.set_mode((1280, 720))
-
-
-    rn=True
-    ###########################################################################     #循环进程
-    while rn:
-        ##########################################################################      #事件处理
-        for ev in pg.event.get():
-            #如果点击关闭窗口按钮
-            if ev.type == pg.QUIT:
-                #退出循环
-                rn=False
-                break
-            if ev.type == pg.KEYDOWN:
-                if ev.key == pg.K_ESCAPE:
-                    rn = False
-                    break
-                if ev.key == pg.K_SPACE:#发射子弹
-                    barrel_length = 35
-                    rad_angle = math.radians(tank1.angle)
-                    bullet_start_pos = (
-                        tank1.rect.centerx + barrel_length * math.cos(rad_angle),
-                        tank1.rect.centery - barrel_length * math.sin(rad_angle)
-                    )
-                    new_bullet = bullet(bullet_start_pos, tank1.angle)
-                    bullet_group.add(new_bullet)
-                    print("发射子弹")
-
-        #按住键盘
-        keys = pg.key.get_pressed()
-        if keys[pg.K_a]:
-            tank1.rotate(5)
-        if keys[pg.K_d]:
-            tank1.rotate(-5)
-        tank_group.add(tank1)
-        if keys[pg.K_w]:
-            tank1.move_forward(5)
-        if keys[pg.K_s]:
-            tank1.move_backward(3)
-
-
-
-    ##############################################################################              # 逻辑处理区
-
-        #超出屏幕的子弹删除
-        for b in bullet_group:
-            if (b.rect.right < 0 or b.rect.left > 1280 or 
-                b.rect.bottom < 0 or b.rect.top > 720):
-                bullet_group.remove(b)
-
-        bullet_group.update() #更新子弹位置
-
-    ################################################################################         #背景   文字渲染区
-        window.fill((255,255,255)) #填充白色背景
-        
-
-
-
-    ###################################################################################     #图形渲染区
-        wall_group.draw(window) #绘制墙壁
-        tank_group.draw(window) #绘制坦克
-        bullet_group.draw(window) #绘制子弹
-
-
-        
-
-
-
-    #########################################
-        #更新窗口内容    
-        pg.display.update()
-        #tick帧率
-        clock.tick(targeted_fps)
-        
-    print("退出循环")
-
-
-    pg.quit()

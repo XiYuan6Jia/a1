@@ -19,7 +19,7 @@ class CollisionDemo:
         # 创建墙壁
         self.wall_group = pg.sprite.Group()
         for wall_info in maps.map1:
-            self.wall_group.add(wall(wall_info['pos'], wall_info['size']))
+            self.wall_group.add(wall(wall_info['pos'], wall_info['size'], wall_info['type']))
         
         # 碰撞检测调试标志
         self.debug_collision = True
@@ -32,13 +32,14 @@ class CollisionDemo:
                 if event.key == pg.K_ESCAPE:
                     return False
                 if event.key == pg.K_SPACE:  # 发射子弹
-                    barrel_length = 35
-                    rad_angle = math.radians(self.tank.angle)
-                    bullet_start_pos = (
-                        self.tank.rect.centerx + barrel_length * math.cos(rad_angle),
-                        self.tank.rect.centery - barrel_length * math.sin(rad_angle)
-                    )
-                    self.bullet_group.add(bullet(bullet_start_pos, self.tank.angle))
+                    if self.tank.alive:
+                        barrel_length = 40
+                        rad_angle = math.radians(self.tank.angle)
+                        bullet_start_pos = (
+                            self.tank.rect.centerx + barrel_length * math.cos(rad_angle),
+                            self.tank.rect.centery - barrel_length * math.sin(rad_angle)
+                        )
+                        self.bullet_group.add(bullet(bullet_start_pos, self.tank.angle))
         
         keys = pg.key.get_pressed()
         if keys[pg.K_a]:
@@ -54,22 +55,34 @@ class CollisionDemo:
     
     def check_collisions(self):
         # 坦克与墙壁碰撞
-        tank_wall_collisions = pg.sprite.spritecollide(
-            self.tank, self.wall_group, False)
-        if tank_wall_collisions and self.debug_collision:
-            print("坦克撞墙!")
-        
+        for tank in self.tank_group:
+            for wall in self.wall_group:
+                if pg.sprite.collide_mask(tank, wall):
+                    if self.debug_collision:
+                        print("坦克撞墙了!")
+                    # 简单处理：将坦克移回上一位置
+                    tank.rewind_move()
+
         # 子弹与墙壁碰撞
-        bullet_wall_collisions = pg.sprite.groupcollide(
-            self.bullet_group, self.wall_group, True, False)
-        if bullet_wall_collisions and self.debug_collision:
-            print("子弹击中墙壁!")
+        for bullet in self.bullet_group:
+            for wall in self.wall_group:
+                if pg.sprite.collide_mask(bullet, wall):
+                    if self.debug_collision:
+                        print("子弹撞墙")
+                        if wall.type == 'horizontal':
+                            bullet.y_speed = -1 * bullet.y_speed
+                        elif wall.type == 'vertical':
+                            bullet.x_speed = -1 * bullet.x_speed
         
         # 子弹与坦克碰撞
-        bullet_tank_collisions = pg.sprite.spritecollide(
-            self.tank, self.bullet_group, True)
-        if bullet_tank_collisions and self.debug_collision:
-            print("坦克被子弹击中!")
+        for bullet in self.bullet_group:
+            for tank in self.tank_group:
+                if pg.sprite.collide_mask(bullet, tank):
+                    if self.debug_collision:
+                        print("子弹击中坦克")
+                        self.bullet_group.remove(bullet)
+                        #self.tank_group.remove(tank)
+                        tank.kill()
     
     def update(self):
         # 移除屏幕外的子弹
