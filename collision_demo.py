@@ -1,5 +1,4 @@
 import pygame as pg
-import random
 import math
 import maps
 from sprites import tank, bullet, wall

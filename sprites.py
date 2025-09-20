@@ -95,6 +95,10 @@ class tank(pg.sprite.Sprite):#坦克
     def show_image_border(self):
         """显示坦克边框（调试用）"""
         pg.draw.rect(self.image, (255, 0, 0), self.image.get_rect(), 1)
+        
+    def kill(self):
+        super().kill()
+        self.alive = False        
 
 class bullet(pg.sprite.Sprite):#子弹
     def __init__(self, pos, angle):
@@ -118,10 +122,6 @@ class bullet(pg.sprite.Sprite):#子弹
         self.time_lived += 1
         if self.time_lived > 500:  # 子弹存在时间超过100帧则消失
             self.kill()
-
-    def kill(self):
-        super().kill()
-        self.alive = False
 
 class wall(pg.sprite.Sprite):#墙壁
     def __init__(self, pos, size, type):
