@@ -20,14 +20,18 @@ class Game:
         self.tank = tank()
         self.tank_group = pg.sprite.Group(self.tank)
         self.bullet_group = pg.sprite.Group()
+        self.tank.alive = False
 
         # 创建墙壁
         self.wall_group = pg.sprite.Group()
         for wall_info in maps.map1:
             self.wall_group.add(wall(wall_info['pos'], wall_info['size'], wall_info['type']))
-            
+
         # 碰撞检测调试标志
         self.debug_collision = True            
+
+    def remember(self):
+        self.tank.remember()
     
     def handle_events(self):
         """处理所有游戏事件"""
@@ -45,6 +49,7 @@ class Game:
                             self.tank.rect.centerx + barrel_length * math.cos(rad_angle),
                             self.tank.rect.centery - barrel_length * math.sin(rad_angle)
                         )
+                        print("发射子弹")
                         self.bullet_group.add(bullet(bullet_start_pos, self.tank.angle))
         
         keys = pg.key.get_pressed()
@@ -67,8 +72,7 @@ class Game:
                 if pg.sprite.collide_mask(tank, wall):
                     if self.debug_collision:
                         print("坦克撞墙了!")
-                    # 简单处理：将坦克移回上一位置
-                    tank.rewind_move()
+                    tank.rewind()  # 碰撞后回退
 
         # 子弹与墙壁碰撞
         for bullet in self.bullet_group:
@@ -88,7 +92,6 @@ class Game:
                     if self.debug_collision:
                         print("子弹击中坦克")
                         self.bullet_group.remove(bullet)
-                        #self.tank_group.remove(tank)
                         tank.kill()
 
     def update(self):
@@ -115,6 +118,7 @@ class Game:
         """主游戏循环"""
         running = True
         while running:
+            self.remember()
             running = self.handle_events()
             self.check_collisions()
             self.update()

@@ -1,7 +1,6 @@
 import pygame as pg
 import random
 import math
-import maps
 
 test_border = 0  # 是否显示边框用于调试
 test_hitbox = 0  # 是否启用碰撞检测用于调试
@@ -47,7 +46,6 @@ class tank(pg.sprite.Sprite):#坦克
      
     def rotate(self, angle_change):
         """旋转坦克"""
-        self.remember_angle()  # 记住当前角度
         self.angle = (self.angle + angle_change) % 360
         self.image = pg.transform.rotate(self.original_image, self.angle)
         self.rect = self.image.get_rect(center=self.rect.center)
@@ -58,7 +56,6 @@ class tank(pg.sprite.Sprite):#坦克
 
     def move_forward(self, distance):
         """向前移动坦克"""
-        self.remember_position()  # 记住当前位置
         rad_angle = math.radians(self.angle)
         self.rect.x += distance * math.cos(rad_angle)
         self.rect.y -= distance * math.sin(rad_angle)
@@ -68,7 +65,6 @@ class tank(pg.sprite.Sprite):#坦克
 
     def move_backward(self, distance):
         """向后移动坦克"""
-        self.remember_position()  # 记住当前位置
         rad_angle = math.radians(self.angle)
         self.rect.x -= distance * math.cos(rad_angle)
         self.rect.y += distance * math.sin(rad_angle)
@@ -76,15 +72,13 @@ class tank(pg.sprite.Sprite):#坦克
         if test_border:
             self.show_image_border()  # 调试用，显示边框
 
-    def remember_position(self):
+    def remember(self):
+        """记住当前角度（用于碰撞后回退）"""
+        self.last_angle = self.angle
         """记住当前位置（用于碰撞后回退）"""
         self.last_position = self.rect.topleft
 
-    def remember_angle(self):
-        """记住当前角度（用于碰撞后回退）"""
-        self.last_angle = self.angle
-
-    def rewind_move(self):
+    def rewind(self):
         """将坦克移回上一位置（简单碰撞处理）"""
         self.rect.topleft = self.last_position
         self.angle = self.last_angle
@@ -95,7 +89,7 @@ class tank(pg.sprite.Sprite):#坦克
     def show_image_border(self):
         """显示坦克边框（调试用）"""
         pg.draw.rect(self.image, (255, 0, 0), self.image.get_rect(), 1)
-        
+
     def kill(self):
         super().kill()
         self.alive = False        
