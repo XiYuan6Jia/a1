@@ -76,14 +76,13 @@ class tank(pg.sprite.Sprite):#坦克
         """记住当前角度（用于碰撞后回退）"""
         self.last_angle = self.angle
         """记住当前位置（用于碰撞后回退）"""
-        self.last_position = self.rect.topleft
+        self.rect_last = self.rect.copy()
 
     def rewind(self):
         """将坦克移回上一位置（简单碰撞处理）"""
-        self.rect.topleft = self.last_position
+        self.rect = self.rect_last
         self.angle = self.last_angle
         self.image = pg.transform.rotate(self.original_image, self.angle)
-        self.rect = self.image.get_rect(center=self.rect.center)
         self.mask = pg.mask.from_surface(self.image)  # 更新碰撞掩码
             
     def show_image_border(self):
