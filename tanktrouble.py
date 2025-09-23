@@ -20,7 +20,7 @@ class Game:
         self.tank = tank()
         self.tank_group = pg.sprite.Group(self.tank)
         self.bullet_group = pg.sprite.Group()
-        self.tank.alive = False
+        self.tank.alive = True
 
         # 创建墙壁
         self.wall_group = pg.sprite.Group()
@@ -120,8 +120,8 @@ class Game:
         while running:
             self.remember()
             running = self.handle_events()
-            self.check_collisions()
             self.update()
+            self.check_collisions()
             self.render()
             self.clock.tick(self.FPS)
         
