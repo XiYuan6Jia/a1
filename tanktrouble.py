@@ -20,7 +20,7 @@ class Game:
         self.tank = tank()
         self.tank_group = pg.sprite.Group(self.tank)
         self.bullet_group = pg.sprite.Group()
-        self.tank.alive = False
+        self.tank.alive = True
 
         # 创建墙壁
         self.wall_group = pg.sprite.Group()
@@ -43,7 +43,7 @@ class Game:
                     return False
                 if event.key == pg.K_SPACE:  # 发射子弹
                     if self.tank.alive:
-                        barrel_length = 40
+                        barrel_length = 45
                         rad_angle = math.radians(self.tank.angle)
                         bullet_start_pos = (
                             self.tank.rect.centerx + barrel_length * math.cos(rad_angle),
