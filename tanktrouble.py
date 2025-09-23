@@ -1,6 +1,6 @@
 import pygame as pg
 import math
-import maps
+import json
 from sprites import tank, bullet, wall
 
 class Game:
@@ -23,8 +23,10 @@ class Game:
         self.tank.alive = True
 
         # 创建墙壁
+        with open('maps.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
         self.wall_group = pg.sprite.Group()
-        for wall_info in maps.map1:
+        for wall_info in data['map1']:
             self.wall_group.add(wall(wall_info['pos'], wall_info['size'], wall_info['type']))
 
         # 碰撞检测调试标志
