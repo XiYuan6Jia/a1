@@ -5,7 +5,7 @@ a = Analysis(
     ['tanktrouble.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('maps.json', '.'), ('sprites.py', '.'), ('assets', 'assets')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

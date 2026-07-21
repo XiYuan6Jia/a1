@@ -522,7 +522,6 @@
   ('lzma',
    'C:\\Users\\21384\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\lzma.py',
    'PYMODULE'),
-  ('maps', 'E:\\data\\pygame\\a1\\maps.py', 'PYMODULE'),
   ('mimetypes',
    'C:\\Users\\21384\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\mimetypes.py',
    'PYMODULE'),
