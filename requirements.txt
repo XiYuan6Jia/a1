@@ -4,6 +4,7 @@
 pygame
 numpy
 pillow
+bilibili-api
 
 # Development tools
 pytest

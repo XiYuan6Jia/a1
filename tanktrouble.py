@@ -50,6 +50,7 @@ class Game:
 
     def remember(self):
         self.tank.remember()
+        self.tank2.remember()
     
     def handle_events(self):
         """处理所有游戏事件"""
